@@ -6,20 +6,56 @@
     <title>高效燃脂四部曲：計時挑戰版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .progress-ring__circle {
-            transition: stroke-dashoffset 0.35s;
-            transform: rotate(-90deg);
-            transform-origin: 50% 50%;
-        }
         .active-card { border: 2px solid #ef4444; transform: scale(1.02); }
         .completed-card { opacity: 0.6; background-color: #f9fafb; border-color: #d1d5db; }
         /* 避免 iOS 点击延迟 */
         button { touch-action: manipulation; }
+        
+        /* 圖片容器與裁切設定 */
+        .exercise-image-container {
+            width: 100%;
+            height: 200px;
+            background-color: #f3f4f6;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        /* 針對特定大圖的裁切邏輯 (Grid Crop) */
+        /* 假設圖表是 2x2 排列，且上方有標題 */
+        .crop-mode {
+            background-size: 200%; /* 放大兩倍，讓一個象限填滿寬度 */
+        }
+        
+        /* 左上：胯下擊掌 (避開標題，約從 Y=20% 開始) */
+        .crop-tl { background-position: 0% 18%; }
+        
+        /* 右上：同側提膝 */
+        .crop-tr { background-position: 100% 18%; }
+        
+        /* 左下：提膝下壓 */
+        .crop-bl { background-position: 0% 98%; }
+        
+        /* 右下：開合跳 */
+        .crop-br { background-position: 100% 98%; }
+
+        .upload-overlay {
+            background: rgba(0,0,0,0.3);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .exercise-image-container:hover .upload-overlay {
+            opacity: 1;
+        }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans pb-32">
 
-    <!-- Sticky Header with Global Timer -->
+    <!-- Sticky Header -->
     <header class="fixed top-0 w-full bg-white shadow-md z-50">
         <div class="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
             <div>
@@ -40,13 +76,27 @@
         </div>
     </header>
 
-    <!-- Spacer for fixed header -->
+    <!-- Spacer -->
     <div class="h-24"></div>
 
     <main class="max-w-md mx-auto p-4 space-y-6">
 
         <!-- Config Section -->
         <section class="bg-white rounded-xl shadow p-4">
+            
+            <!-- Image Upload Feature -->
+            <div class="mb-4 pb-4 border-b border-gray-100">
+                <label class="block text-sm font-bold text-gray-700 mb-2">動作圖表來源</label>
+                <div class="flex gap-2">
+                    <label class="flex-1 bg-blue-50 text-blue-600 px-4 py-2 rounded-lg text-sm font-bold cursor-pointer hover:bg-blue-100 text-center border border-blue-200 transition">
+                        📷 上傳完整圖表
+                        <input type="file" id="chartUpload" accept="image/*" class="hidden" onchange="handleChartUpload(this)">
+                    </label>
+                    <button onclick="resetImages()" class="px-3 py-2 text-gray-400 text-xs hover:text-gray-600 underline">重置</button>
+                </div>
+                <p class="text-[10px] text-gray-400 mt-1">💡 上傳包含4個動作的大圖，系統會自動裁切。</p>
+            </div>
+
             <h3 class="text-sm font-bold text-gray-500 mb-3 uppercase tracking-wider">時間設定 (秒)</h3>
             <div class="grid grid-cols-2 gap-4">
                 <div>
@@ -62,7 +112,7 @@
 
         <!-- Workout Cards Container -->
         <div id="cardsContainer" class="space-y-4">
-            <!-- Cards will be rendered by JS for cleaner state management -->
+            <!-- Cards will be rendered by JS -->
         </div>
 
         <!-- Completion Control -->
@@ -84,54 +134,152 @@
 
     </main>
 
-    <!-- Audio Beep (Optional) -->
     <script>
         // Data Structure
         const exercises = [
-            { id: 1, name: "胯下擊掌", en: "Under-Leg Clap", desc: "背部挺直，大腿抬高，左右交替。", color: "blue" },
-            { id: 2, name: "同側提膝", en: "Side Knee Drive", desc: "側腹發力，手肘帶動身體側彎。", color: "indigo" },
-            { id: 3, name: "提膝下壓", en: "Knee Drive Press", desc: "雙手高舉用力下拉，配合抬腿。", color: "purple" },
-            { id: 4, name: "開合跳", en: "Jumping Jacks", desc: "雙腳開合，落地輕盈。", color: "red" }
+            { 
+                id: 1, 
+                name: "胯下擊掌", 
+                en: "Under-Leg Clap", 
+                desc: "背部挺直，大腿抬高，左右交替。", 
+                color: "blue",
+                defaultImg: "https://placehold.co/600x400/e0f2fe/1e40af?text=點擊上傳圖片",
+                cropClass: "crop-tl"
+            },
+            { 
+                id: 2, 
+                name: "同側提膝", 
+                en: "Side Knee Drive", 
+                desc: "側腹發力，手肘帶動身體側彎。", 
+                color: "indigo",
+                defaultImg: "https://placehold.co/600x400/e0e7ff/3730a3?text=點擊上傳圖片",
+                cropClass: "crop-tr"
+            },
+            { 
+                id: 3, 
+                name: "提膝下壓", 
+                en: "Knee Drive Press", 
+                desc: "雙手高舉用力下拉，配合抬腿。", 
+                color: "purple",
+                defaultImg: "https://placehold.co/600x400/f3e8ff/6b21a8?text=點擊上傳圖片",
+                cropClass: "crop-bl"
+            },
+            { 
+                id: 4, 
+                name: "開合跳", 
+                en: "Jumping Jacks", 
+                desc: "雙腳開合，落地輕盈。", 
+                color: "red",
+                defaultImg: "https://placehold.co/600x400/fee2e2/991b1b?text=點擊上傳圖片",
+                cropClass: "crop-br"
+            }
         ];
 
         // State
         let timerInterval = null;
-        let currentState = 'IDLE'; // IDLE, WORK, REST
+        let currentState = 'IDLE'; 
         let currentStepIndex = 0;
         let timeLeft = 0;
         let totalTime = 0;
         
-        // Settings
-        let settings = {
-            work: 45,
-            rest: 30
-        };
+        // Image State
+        let globalChartImage = null; // Stores DataURL of the big chart
+        let customImages = {}; // Stores individual overrides
 
         // Initialize
         function init() {
-            loadSettings();
             renderCards();
             updateDailyProgress();
+        }
+
+        // --- Image Handling ---
+
+        function handleChartUpload(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    globalChartImage = e.target.result;
+                    // Clear individual custom images to favor the chart
+                    customImages = {}; 
+                    renderCards();
+                    alert("圖表已上傳！已自動為您裁切成四個動作。");
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function handleSingleImageUpload(index, input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    customImages[index] = e.target.result;
+                    renderCards(); // Re-render to show new specific image
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function resetImages() {
+            globalChartImage = null;
+            customImages = {};
+            renderCards();
+        }
+
+        function getBackgroundImageStyle(index) {
+            const ex = exercises[index];
+            
+            // 1. Check for individual override
+            if (customImages[index]) {
+                return `background-image: url('${customImages[index]}'); background-size: cover; background-position: center;`;
+            }
+            
+            // 2. Check for global chart (Apply Crop Logic)
+            if (globalChartImage) {
+                // Return generic crop class handling in CSS, here we just set the URL
+                return `background-image: url('${globalChartImage}');`; 
+            }
+            
+            // 3. Default Placeholder
+            return `background-image: url('${ex.defaultImg}'); background-size: cover; background-position: center;`;
+        }
+        
+        function getCropClass(index) {
+            // Only apply crop classes if we are using the global chart AND no custom override
+            if (globalChartImage && !customImages[index]) {
+                return `crop-mode ${exercises[index].cropClass}`;
+            }
+            return '';
         }
 
         // --- Render UI ---
         function renderCards() {
             const container = document.getElementById('cardsContainer');
+            // Save current scroll position or state if needed, but simple re-render is fine here
             container.innerHTML = '';
 
             exercises.forEach((ex, index) => {
-                const isLast = index === exercises.length - 1;
-                const btnAction = isLast ? '完成一組' : '下一步';
+                const bgStyle = getBackgroundImageStyle(index);
+                const cropClass = getCropClass(index);
                 
                 const html = `
                     <div id="card-${index}" class="bg-white rounded-xl shadow p-5 transition-all duration-300 border-l-4 border-${ex.color}-500 relative overflow-hidden">
-                        <div class="flex justify-between items-start relative z-10">
+                        <div class="flex justify-between items-start relative z-10 mb-3">
                             <div>
                                 <h3 class="text-xl font-bold text-gray-800">${index + 1}. ${ex.name}</h3>
                                 <p class="text-xs text-gray-500 font-medium">${ex.en}</p>
                             </div>
                             <span class="bg-${ex.color}-100 text-${ex.color}-800 text-xs px-2 py-1 rounded font-bold">30 下</span>
                         </div>
+
+                        <!-- Image Container (Clickable) -->
+                        <label class="block relative z-10 w-full mb-3 cursor-pointer group">
+                             <div class="exercise-image-container ${cropClass}" style="${bgStyle}">
+                                <div class="upload-overlay absolute inset-0 flex items-center justify-center text-white font-bold text-sm">
+                                    更換此圖片
+                                </div>
+                             </div>
+                             <input type="file" class="hidden" accept="image/*" onchange="handleSingleImageUpload(${index}, this)">
+                        </label>
                         
                         <p class="text-sm text-gray-600 mt-2 mb-4 leading-relaxed relative z-10">${ex.desc}</p>
                         
@@ -150,9 +298,14 @@
                 `;
                 container.innerHTML += html;
             });
+            
+            // Re-apply active styles if timer is running (simple check)
+            if (currentState !== 'IDLE') {
+                document.getElementById(`card-${currentStepIndex}`).classList.add('active-card');
+            }
         }
 
-        // --- Timer Logic (The Core Fix) ---
+        // --- Timer Logic (Unchanged but included for completeness) ---
 
         function clearGlobalTimer() {
             if (timerInterval) {
@@ -164,11 +317,10 @@
         function stopTimer() {
             clearGlobalTimer();
             currentState = 'IDLE';
-            updateTimerDisplay(0, 0); // Reset display
+            updateTimerDisplay(0, 0); 
             document.getElementById('statusText').innerText = "已暫停";
             document.getElementById('statusText').className = "text-xs font-bold text-gray-400 uppercase";
             
-            // Reset active styles
             document.querySelectorAll('[id^="card-"]').forEach(el => {
                 el.classList.remove('active-card', 'ring-2', 'ring-offset-2');
                 el.style.opacity = '1';
@@ -176,36 +328,30 @@
         }
 
         function startWork(index) {
-            // 1. Clean up previous states
             clearGlobalTimer();
             resetCardStyles();
             
-            // 2. Set Active Card Style
             currentStepIndex = index;
             const currentCard = document.getElementById(`card-${index}`);
             currentCard.classList.add('active-card');
             
-            // 3. Setup Timer
             currentState = 'WORK';
             timeLeft = parseInt(document.getElementById('workDuration').value);
             totalTime = timeLeft;
             
             updateStatusText(`動作 ${index + 1} 進行中`, 'text-red-600');
             
-            // 4. Update Button UI
             const btn = document.getElementById(`btn-${index}`);
             btn.innerHTML = `<span class="animate-pulse">計時中...</span>`;
             btn.disabled = true;
 
-            // 5. Start Loop
-            tick(); // Immediate update
+            tick(); 
             timerInterval = setInterval(tick, 1000);
         }
 
         function startRest(index) {
             clearGlobalTimer();
             
-            // Mark previous card as done
             const prevCard = document.getElementById(`card-${index}`);
             prevCard.classList.remove('active-card');
             prevCard.classList.add('completed-card');
@@ -213,18 +359,15 @@
             prevBtn.innerText = "✓ 完成";
             prevBtn.className = "flex-1 bg-gray-300 text-gray-500 py-3 rounded-lg font-bold text-lg cursor-not-allowed";
             
-            // Check if it was the last exercise
             if (index >= exercises.length - 1) {
                 finishGroup();
                 return;
             }
 
-            // Start Rest
             currentState = 'REST';
             timeLeft = parseInt(document.getElementById('restDuration').value);
             totalTime = timeLeft;
             
-            // Scroll to next card lightly
             const nextCard = document.getElementById(`card-${index+1}`);
             nextCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
@@ -238,35 +381,29 @@
 
             if (timeLeft <= 0) {
                 clearGlobalTimer();
-                playBeep(); // Audio feedback
+                playBeep(); 
 
                 if (currentState === 'WORK') {
                     startRest(currentStepIndex);
                 } else if (currentState === 'REST') {
-                    // Auto start next work? Or wait for user?
-                    // Let's Prompt User visually to start next
                     const nextIndex = currentStepIndex + 1;
                     if (nextIndex < exercises.length) {
-                         startWork(nextIndex); // Auto-chaining
+                         startWork(nextIndex); 
                     }
                 }
             }
             timeLeft--;
         }
 
-        // --- Helpers ---
-
         function updateTimerDisplay(current, total) {
             const mins = Math.floor(current / 60).toString().padStart(2, '0');
             const secs = (current % 60).toString().padStart(2, '0');
             document.getElementById('mainTimer').innerText = `${mins}:${secs}`;
             
-            // Progress Bar Logic
             const percent = total > 0 ? ((total - current) / total) * 100 : 0;
             const bar = document.getElementById('progressBar');
             bar.style.width = `${percent}%`;
             
-            // Dynamic color based on state
             if (currentState === 'WORK') {
                 document.getElementById('mainTimer').classList.replace('text-green-600', 'text-red-600');
                 bar.className = `h-1 transition-all duration-1000 bg-red-500`;
@@ -292,7 +429,6 @@
             updateStatusText('回合結束！', 'text-blue-600');
             document.getElementById('mainTimer').innerText = "完成";
             
-            // Logic to add to history
             let done = parseInt(localStorage.getItem('groupsDone_v2')) || 0;
             done++;
             localStorage.setItem('groupsDone_v2', done);
@@ -300,9 +436,8 @@
             
             alert("太棒了！您已完成這一組循環！");
             
-            // Reset UI for next round
             setTimeout(() => {
-                renderCards(); // Re-render to reset buttons
+                renderCards(); 
                 stopTimer();
             }, 1000);
         }
@@ -312,20 +447,12 @@
             document.getElementById('completedGroups').innerText = done;
         }
 
-        function saveSettings() {
-            // Simple validation could go here
-        }
-
-        function loadSettings() {
-            // Can add localStorage for settings if needed
-        }
+        function saveSettings() {}
 
         function playBeep() {
-            // Simple visual feedback since audio might be blocked without interaction
             document.body.classList.add('bg-gray-300');
             setTimeout(() => document.body.classList.remove('bg-gray-300'), 200);
             
-            // Try Audio (works mostly on mobile if interaction happened)
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 const oscillator = audioCtx.createOscillator();
@@ -333,7 +460,7 @@
                 oscillator.connect(gainNode);
                 gainNode.connect(audioCtx.destination);
                 oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // A5
+                oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); 
                 gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
                 oscillator.start();
                 oscillator.stop(audioCtx.currentTime + 0.5);
@@ -342,7 +469,6 @@
             }
         }
 
-        // Start
         init();
 
     </script>
