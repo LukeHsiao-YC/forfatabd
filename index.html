@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高效燃脂四部曲：每日挑戰</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .active-tab { border-bottom: 4px solid #ef4444; color: #ef4444; }
+        .workout-card { transition: all 0.3s ease; }
+        .completed { opacity: 0.6; background-color: #f3f4f6; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans pb-20">
+
+    <header class="bg-red-500 text-white p-6 text-center shadow-lg">
+        <h1 class="text-2xl font-bold">高效燃脂四部曲：每日挑戰</h1>
+        <p class="mt-2 text-sm">每個動作 30 下 · 每日 6 組</p>
+    </header>
+
+    <main class="max-w-md mx-auto p-4">
+        
+        <section class="bg-white rounded-xl shadow-md p-4 mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <span class="font-bold text-lg">休息設定</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="restToggle" class="sr-only peer">
+                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                    <span class="ml-3 text-sm font-medium">動作間休息 30s</span>
+                </label>
+            </div>
+            
+            <div id="timerDisplay" class="hidden text-center p-4 bg-orange-100 rounded-lg">
+                <p class="text-orange-600 font-bold">休息時間</p>
+                <div class="text-4xl font-mono font-black text-orange-700" id="seconds">30</div>
+            </div>
+        </section>
+
+        <div id="workoutContainer" class="space-y-4">
+            <div class="workout-card bg-white p-4 rounded-xl shadow border-l-4 border-blue-500" id="step1">
+                <div class="flex justify-between items-start">
+                    <h2 class="text-xl font-bold text-blue-700">1. 胯下擊掌</h2>
+                    <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">30 下</span>
+                </div>
+                <p class="text-sm text-gray-600 mt-1">Under-Leg Clap</p>
+                <ul class="text-sm mt-3 space-y-1 text-gray-700">
+                    <li>• 保持上半身直立，不要過度彎腰。</li>
+                    <li>• 大腿抬高，雙手在腿下擊掌。</li>
+                    <li>• 左右交替進行。</li>
+                </ul>
+                <button onclick="completeStep(1)" class="w-full mt-4 bg-blue-500 text-white py-2 rounded-lg font-bold">完成此項</button>
+            </div>
+
+            <div class="workout-card bg-white p-4 rounded-xl shadow border-l-4 border-green-500" id="step2">
+                <div class="flex justify-between items-start">
+                    <h2 class="text-xl font-bold text-green-700">2. 同側提膝</h2>
+                    <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">30 下</span>
+                </div>
+                <p class="text-sm text-gray-600 mt-1">Same-Side Knee Drive</p>
+                <ul class="text-sm mt-3 space-y-1 text-gray-700">
+                    <li>• 專注腹部發力，膝蓋往外側開。</li>
+                    <li>• 手肘帶動身體側彎。</li>
+                    <li>• 左右交替進行。</li>
+                </ul>
+                <button onclick="completeStep(2)" class="w-full mt-4 bg-green-500 text-white py-2 rounded-lg font-bold">完成此項</button>
+            </div>
+
+            <div class="workout-card bg-white p-4 rounded-xl shadow border-l-4 border-purple-500" id="step3">
+                <div class="flex justify-between items-start">
+                    <h2 class="text-xl font-bold text-purple-700">3. 提膝下壓</h2>
+                    <span class="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded">30 下</span>
+                </div>
+                <p class="text-sm text-gray-600 mt-1">Knee Drive with Downward Press</p>
+                <ul class="text-sm mt-3 space-y-1 text-gray-700">
+                    <li>• 雙手互握舉高，高抬腿下拉。</li>
+                    <li>• 動作同步有爆發力。</li>
+                    <li>• 左右交替進行。</li>
+                </ul>
+                <button onclick="completeStep(3)" class="w-full mt-4 bg-purple-500 text-white py-2 rounded-lg font-bold">完成此項</button>
+            </div>
+
+            <div class="workout-card bg-white p-4 rounded-xl shadow border-l-4 border-red-500" id="step4">
+                <div class="flex justify-between items-start">
+                    <h2 class="text-xl font-bold text-red-700">4. 開合跳</h2>
+                    <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">30 下</span>
+                </div>
+                <p class="text-sm text-gray-600 mt-1">Jumping Jacks</p>
+                <ul class="text-sm mt-3 space-y-1 text-gray-700">
+                    <li>• 雙腳張開跳，雙手頭頂擊掌。</li>
+                    <li>• 落地輕盈，用前腳掌緩衝。</li>
+                </ul>
+                <button onclick="completeStep(4)" class="w-full mt-4 bg-red-500 text-white py-2 rounded-lg font-bold">完成此項</button>
+            </div>
+        </div>
+
+        <div class="mt-8 bg-gray-800 text-white p-6 rounded-2xl text-center shadow-xl">
+            <h3 class="text-lg">今日已完成</h3>
+            <div class="flex justify-center items-baseline my-2">
+                <span id="completedGroups" class="text-5xl font-black text-yellow-400">0</span>
+                <span class="text-xl ml-2">/ 6 組</span>
+            </div>
+            <button onclick="resetDaily()" class="text-xs text-gray-400 underline mt-2">重置今日進度</button>
+        </div>
+
+        <section class="mt-8">
+            <h3 class="font-bold text-lg mb-3">運動週報</h3>
+            <div id="historyLog" class="grid grid-cols-7 gap-2">
+                </div>
+        </section>
+
+    </main>
+
+    <script>
+        let currentStep = 1;
+        let groupsDone = parseInt(localStorage.getItem('groupsDone')) || 0;
+        let history = JSON.parse(localStorage.getItem('workoutHistory')) || {};
+
+        document.getElementById('completedGroups').innerText = groupsDone;
+
+        function completeStep(step) {
+            const card = document.getElementById(`step${step}`);
+            card.classList.add('completed');
+            card.querySelector('button').disabled = true;
+            card.querySelector('button').innerText = '✓ 已完成';
+
+            const useRest = document.getElementById('restToggle').checked;
+            
+            if (useRest && step < 4) {
+                startRest();
+            }
+
+            if (step === 4) {
+                setTimeout(() => {
+                    alert('恭喜完成一組！');
+                    groupsDone++;
+                    updateProgress();
+                    resetCards();
+                }, 500);
+            }
+        }
+
+        function startRest() {
+            const display = document.getElementById('timerDisplay');
+            const secLabel = document.getElementById('seconds');
+            display.classList.remove('hidden');
+            let timeLeft = 30;
+            secLabel.innerText = timeLeft;
+
+            const timer = setInterval(() => {
+                timeLeft--;
+                secLabel.innerText = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    display.classList.add('hidden');
+                    alert('休息結束，開始下一個動作！');
+                }
+            }, 1000);
+        }
+
+        function updateProgress() {
+            localStorage.setItem('groupsDone', groupsDone);
+            document.getElementById('completedGroups').innerText = groupsDone;
+            
+            const today = new Date().toISOString().split('T')[0];
+            history[today] = groupsDone;
+            localStorage.setItem('workoutHistory', JSON.stringify(history));
+            renderHistory();
+        }
+
+        function resetCards() {
+            for(let i=1; i<=4; i++) {
+                const card = document.getElementById(`step${i}`);
+                card.classList.remove('completed');
+                card.querySelector('button').disabled = false;
+                card.querySelector('button').innerText = '完成此項';
+            }
+        }
+
+        function resetDaily() {
+            if(confirm('確定要重置今日進度嗎？')) {
+                groupsDone = 0;
+                updateProgress();
+                resetCards();
+            }
+        }
+
+        function renderHistory() {
+            const log = document.getElementById('historyLog');
+            log.innerHTML = '';
+            const today = new Date();
+            
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(today.getDate() - i);
+                const dateStr = d.toISOString().split('T')[0];
+                const count = history[dateStr] || 0;
+                const isToday = i === 0;
+
+                const dayEl = document.createElement('div');
+                dayEl.className = `flex flex-col items-center p-2 rounded-lg ${isToday ? 'bg-red-100 border border-red-300' : 'bg-white shadow-sm'}`;
+                dayEl.innerHTML = `
+                    <span class="text-[10px] text-gray-500">${dateStr.slice(5)}</span>
+                    <span class="font-bold ${count >= 6 ? 'text-green-600' : 'text-gray-700'}">${count}</span>
+                    <div class="w-2 h-2 rounded-full mt-1 ${count >= 6 ? 'bg-green-500' : 'bg-gray-300'}"></div>
+                `;
+                log.appendChild(dayEl);
+            }
+        }
+
+        renderHistory();
+    </script>
+</body>
+</html>
